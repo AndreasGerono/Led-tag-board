@@ -39,3 +39,8 @@ void nb_delay_restart(nb_delay instance)
 {
 	instance->t_start = HAL_GetTick();
 }
+
+void nb_delay_0(nb_delay instance)
+{
+	instance->t_start = 0;
+}

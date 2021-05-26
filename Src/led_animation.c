@@ -58,10 +58,10 @@ void animation_nop(int8_t n){
 void animation_start(animation *anim_ptr)
 {
     (*anim_ptr)->position = (*anim_ptr)->start;
-    nb_delay_restart((*anim_ptr)->delay);
+    nb_delay_0((*anim_ptr)->delay);
     while (NULL != (*anim_ptr)->prev) {
         *anim_ptr = (*anim_ptr)->prev;
-        nb_delay_restart((*anim_ptr)->delay);
+        nb_delay_0((*anim_ptr)->delay);
         (*anim_ptr)->position = (*anim_ptr)->start;
     }
 }
@@ -77,26 +77,23 @@ void animation_start_next(animation *anim_ptr)
 {
     if (NULL != (*anim_ptr)->next) {
         *anim_ptr = (*anim_ptr)->next;
-        nb_delay_restart((*anim_ptr)->delay);
+        nb_delay_0((*anim_ptr)->delay);
     }
 }
 
 void animation_animate(animation *anim_ptr)
 {
     animation anim = *anim_ptr;
-
-    if (anim->position < anim->end) {
-        if (nb_delay_check(anim->delay)){
+    if (nb_delay_check(anim->delay)){
+    	if (anim->position < anim->end) {
             anim->function(anim->position);
             anim->position++;
-        }
-    } else if (anim->position > anim->end) {
-        if (nb_delay_check(anim->delay)){
+        } else if (anim->position > anim->end) {
             anim->function(anim->position);
             anim->position--;
+        } else {
+        	animation_start_next(anim_ptr);
         }
-    } else {
-        animation_start_next(anim_ptr);
     }
 }
 

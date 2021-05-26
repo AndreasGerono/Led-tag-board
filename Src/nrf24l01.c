@@ -2,7 +2,7 @@
 #include "gpio.h"
 
 #define SPI_DELAY 255
-#define RF_CHANNEL 0x11
+#define RF_CHANNEL 0x4
 
 static SPI_HandleTypeDef *spi;
 
@@ -236,21 +236,21 @@ void nrf_init_multicast(SPI_HandleTypeDef *hspi)
 {
     spi = hspi;
     ss_set();
-    uint8_t multicast_addr[] = {100, 100, 100};
+    uint8_t multicast_addr[] = {'A', 'B', 'C', 'D', 'E'};
 
     HAL_Delay(100);                                 /* Power on reset 100ms  */
     HAL_SPI_Init(spi);
     
     nrf_register_write(SETUP_RETR, 0);              /* Turn off retransmission */
     nrf_register_write(EN_AA, 0);                   /* Turn off auto ack for all data pipes */
-    nrf_register_write(SETUP_AW, AW_LEN3);          /* Set addr width */
+    nrf_register_write(SETUP_AW, AW_LEN5);          /* Set addr width */
     nrf_register_write(RF_CH, RF_CHANNEL);
     nrf_register_write(RX_PW_P0, 1);                /* Set payload pipe0 as 1 byte */
-    nrf_register_write(EN_RXADDR, ERX_P0);			/* Enable data pipe 0 */
 
     nrf_register_reset(CONFIG, EN_CRC);             /* CRC off for */
-    nrf_set_data_rate(DR_250KBS);
+//    nrf_set_data_rate(DR_250KBS);
 
-    nrf_set_addr(RX_ADDR_P0, 3, multicast_addr);    /* set rx addr */
-    nrf_set_addr(TX_ADDR, 3, multicast_addr);       /* set tx addr */
+    nrf_set_addr(RX_ADDR_P0, 5, multicast_addr);    /* set rx addr */
+    nrf_set_addr(TX_ADDR, 5, multicast_addr);       /* set tx addr */
+    nrf_register_write(EN_RXADDR, ERX_P0);			/* Enable data pipe 0 */
 }

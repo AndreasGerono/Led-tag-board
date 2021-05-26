@@ -15,7 +15,7 @@
 static uint8_t no_leds;
 static SPI_HandleTypeDef *spi;
 static uint8_t *buffer;
-static uint8_t len = 0;
+static uint16_t len = 0;
 
 enum {
 	zero = 0b11000000,
@@ -35,9 +35,9 @@ static ws2812_led *leds;
 
 void ws2812_transmit()
 {
-	for (uint8_t i = 0; i < no_leds; ++i) {
+	for (uint16_t i = 0; i < no_leds; ++i) {
 		uint32_t data = __RBIT(leds[i].data);
-		for (uint8_t j = 0; j < NO_BITS;  ++j) {
+		for (uint16_t j = 0; j < NO_BITS;  ++j) {
 			uint16_t index = j + NO_BITS * i;
 			if (data & (1 << j) && leds[i].colors.state == on) {
 				buffer[index] = one;

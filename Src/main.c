@@ -52,13 +52,11 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+/* USER CODE BEGIN PFP */
 void stm_sleep()
 {
-	;
+	HAL_PWR_EnterSLEEPMode(PWR_REGULATOR_VOLTAGE_SCALE1, PWR_SLEEPENTRY_WFI);
 }
-
-/* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -103,39 +101,37 @@ int main(void)
   ws2812_init(8, &hspi1);
 
   struct ws2812_color color = {
-		  .red = 138,
-		  .green = 10,
-		  .blue = 70,
+		  .red = 10,
+		  .green = 0,
+		  .blue = 0,
   };
 
   ws2812_set_color_all(&color);
-
 
   nb_delay button_delay = nb_delay_create(7000, NULL);
   nb_delay ws_2812_transmit_delay = nb_delay_create(50, ws2812_transmit);
   nb_delay nrf_receive_delay = nb_delay_create(100, NULL);
 
-  animation power_up_animation1 = animation_create(0, 4, 200, ws2812_on);
-  animation_add_step(&power_up_animation1, 0, 1, 2000, animation_nop);
-  animation_add_step(&power_up_animation1, 0, 4, 0, ws2812_off);
+  animation power_up_animation1 = animation_create(0, 8, 200, ws2812_on);
+  animation_add_step(&power_up_animation1, 0, 1, 1000, animation_nop);
+  animation_add_step(&power_up_animation1, 0, 8, 0, ws2812_off);
 
-  animation power_up_animation2 = animation_create(7, 3, 200, ws2812_on);
-  animation_add_step(&power_up_animation2, 0, 1, 2000, animation_nop);
-  animation_add_step(&power_up_animation2, 7, 3, 0, ws2812_off);
+//  animation power_up_animation2 = animation_create(15, 7, 200, ws2812_nop);
+//  animation_add_step(&power_up_animation2, 0, 1, 2000, animation_nop);
+//  animation_add_step(&power_up_animation2, 15, 7, 0, ws2812_off);
 
 
-  animation power_down_animation1 = animation_create(0, 4, 0, ws2812_on);
-  animation_add_step(&power_down_animation1, 3, -1, 200, ws2812_off);
+  animation power_down_animation1 = animation_create(0, 8, 0, ws2812_on);
+    animation_add_step(&power_down_animation1, 0, 1, 400, animation_nop);
+  animation_add_step(&power_down_animation1, 7, -1, 200, ws2812_off);
 
-  animation power_down_animation2 = animation_create(4, 8, 0, ws2812_on);
-  animation_add_step(&power_down_animation2, 4, 8, 200, ws2812_off);
+//  animation power_down_animation2 = animation_create(8, 16, 0, ws2812_on);
+//  animation_add_step(&power_down_animation2, 8, 16, 200, ws2812_off);
 
 
   animation main_animation = animation_create(0, 8, 200, ws2812_on);
   animation_add_step(&main_animation, 0, 1, 1000, animation_nop);
-  animation_add_step(&main_animation, 7, -1, 100, ws2812_off);
-
-
+  animation_add_step(&main_animation, 8, -1, 100, ws2812_off);
 
 
   enum power_state {
@@ -178,16 +174,10 @@ int main(void)
 			case stm_sleeping:
 				current_power_state = stm_to_running;
 				animation_start(&power_up_animation1);
-				animation_start(&power_up_animation2);
-				nrf_power_up();
-				nrf_send_command(FLUSH_RX);
-				nrf_send_command(FLUSH_TX);
-				nrf_rx_mode();
 				break;
 			case stm_running:
 				current_power_state = stm_to_sleep;
 				animation_start(&power_down_animation1);
-				animation_start(&power_down_animation2);
 				nrf_standby();
 				nrf_power_down();
 				break;
@@ -195,16 +185,17 @@ int main(void)
 	  }
 
 	  if (current_power_state == stm_to_running) {
-		  if (animation_ended(power_up_animation1) &&
-				  animation_ended(power_up_animation2)) {
+		  if (animation_ended(power_up_animation1)) {
 	  		  current_power_state = stm_running;
+	  		  nrf_power_up();
+	  		  nrf_send_command(FLUSH_RX);
+	  		  nrf_send_command(FLUSH_TX);
+	  		  nrf_rx_mode();
 	  	  }
 	  }
 
 	  if (current_power_state == stm_to_sleep) {
-		  if (animation_ended(power_down_animation1) &&
-				  animation_ended(power_down_animation2)) {
-	  		  stm_sleep();
+		  if (animation_ended(power_down_animation1)) {
 	  		  current_power_state = stm_sleeping;
 	  	  }
 	  }
@@ -233,14 +224,15 @@ int main(void)
 	  	  }
 	  }
 
-	  if (button_state == released)
+	  if (button_state == released){
 		  nb_delay_restart(button_delay);
+	  	  if (current_power_state == stm_sleeping)
+	  		  stm_sleep();
+	  }
 
 	  animation_animate(&main_animation);
 	  animation_animate(&power_down_animation1);
-	  animation_animate(&power_down_animation2);
 	  animation_animate(&power_up_animation1);
-	  animation_animate(&power_up_animation2);
 
 	  nb_delay_check(ws_2812_transmit_delay);
     /* USER CODE END WHILE */
